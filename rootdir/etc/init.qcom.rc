@@ -24,7 +24,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import init.target.rc
 import init.qcom.usb.rc
 import init.qcom.power.rc
 
@@ -84,8 +83,6 @@ on early-boot
     chown bluetooth bluetooth /dev/ttyHS2
 
 on boot
-    mount debugfs /sys/kernel/debug /sys/kernel/debug
-
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
@@ -197,10 +194,6 @@ on fs
     chmod 0775 /dev/block/platform/msm_sdcc.1/by-name
 
 on post-fs
-    chown system system /sys/block/mmcblk0/queue/scheduler
-    chmod 0664 /sys/block/mmcblk0/queue/scheduler
-    chown system system /sys/block/mmcblk1/queue/scheduler
-    chmod 0664 /sys/block/mmcblk1/queue/scheduler
 
     # for controlling write performance boosting
     chown system radio /sys/block/mmcblk0/bkops_en
@@ -694,9 +687,10 @@ service qcamerasvr /system/bin/mm-qcamera-daemon
     group system camera inet input graphics
 
 service mpdecision /system/bin/mpdecision --avg_comp
-   class late_start
+   class main
    user root
    group system
+   disabled
 
 service kickstart /system/bin/qcks -i /firmware-mdm/image/
     user root

@@ -32,7 +32,7 @@
 #include <hardware/hardware.h>
 #include <hardware/camera.h>
 #include <camera/Camera.h>
-#include <camera/CameraParameters2.h>
+#include <camera/CameraParameters.h>
 #include <dlfcn.h>
 
 #define BACK_CAMERA_ID 0
@@ -347,7 +347,7 @@ static int camera_set_parameters(struct camera_device *device,
     __android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, settings);
 #endif
 
-    CameraParameters2 params;
+    CameraParameters params;
     params.unflatten(String8(settings));
 
     // fix params here
@@ -368,15 +368,19 @@ static int camera_set_parameters(struct camera_device *device,
 
 #ifdef DERP2
     bool isVideo = false;
+    bool isZsl = false;
+    int camMode = -1;
+
     if (params.get(CameraParameters::KEY_RECORDING_HINT))
         isVideo = !strcmp(params.get(CameraParameters::KEY_RECORDING_HINT), "true");
 
-    if (id == FRONT_CAMERA_ID) {
-        int camMode;
+    if (params.get(CameraParameters::KEY_ZSL))
+        isZsl = !strcmp(params.get(CameraParameters::KEY_ZSL), "on");
+
+    if (id == FRONT_CAMERA_ID || isZsl) {
+
         if (params.get(CameraParameters::KEY_SAMSUNG_CAMERA_MODE)) {
             camMode = params.getInt(CameraParameters::KEY_SAMSUNG_CAMERA_MODE);
-        } else {
-            camMode = -1;
         }
 
         if (camMode == -1) {
@@ -385,6 +389,9 @@ static int camera_set_parameters(struct camera_device *device,
             params.set(CameraParameters::KEY_SAMSUNG_CAMERA_MODE, isVideo ? "1" : "0");
         }
     }
+
+    if (id == FRONT_CAMERA_ID)
+       params.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES, "960x720");
 
     /* Are we in continuous focus mode? */
     if (strcmp(params.get(CameraParameters::KEY_FOCUS_MODE), "infinity") &&
@@ -435,7 +442,7 @@ static char *camera_get_parameters(struct camera_device *device)
 
     wrapper_camera_device_t *wrapper = (wrapper_camera_device_t *)device;
 
-    CameraParameters2 params;
+    CameraParameters params;
     params.unflatten(String8(parameters));
 
     // fix params here
